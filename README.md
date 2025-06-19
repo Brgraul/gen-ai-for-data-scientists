@@ -8,14 +8,14 @@ Welcome, pioneers! Throughout this course, we aim to empower you with tools that
 Our program includes 4 interactive sessions where we'll explore four useful uses for GenAI in your data science workflows.
 We'll interleave knowledge impulses with hands-on sessions, where you'll put the learns skills in practice in smaller micro-learning experiences around the same _Flexibility cost calculator_ use case.
 
-### Foundations: Best-in-class usage of AI Coding in VS Code
+### **Lecture 1**: Pushing VS Code's AI coding to its limits [Foundations]
 In this session, we show you how a few minutes of setup, and three mental models can immediately improve the quality of your AI-generated code.
 
-### Testing, redefined; Using GenAI to make your code Bulletproof
+### **Lecture 2**: Using GenAI to thoroughly test your code [Testing]
 In this session, we'll review the main types of tests to guarantee robust code: unit, integration & end-to-end. Then, we'll write a solid test suite with the help of GenAI, but also show you how tests help anchor your AI agents, and generate better code.
 
-### Security & performance optimization: Improving coding standards with GenAI
+### **Lecture 3**: Improving coding standards with GenAI [Security, Performance]
 In this session, we elevate your code quality focusing on performance (Memory & speed), security, & extensibility. For this, we'll use profilers, and static analysis tools in combination with agents to spot and fix bottlenecks and vulnerabilities.
 
-### Zero to Azure hero! GenAI for systems architecture
+### **Lecture 4**: Systems architecture with GenAI [Architecture]
 In this session, we'll help you use GenAI to figure out your runtime requirements based on client needs. From these, we'll help you compare potential architectures, evaluate pros and cons, and come up with rough OPEX estimates, making sure these are grounded on the current Azure offering.
