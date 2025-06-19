@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "energy-flexibility"
 version = "1.0.0"
-description = "Energy flexibility cost calculations for pumped hydro storage"
+description = "Battery Grid Service Compensation Calculator"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
