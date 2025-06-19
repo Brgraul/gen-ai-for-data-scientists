@@ -125,10 +125,11 @@ class ProductionCosts(NamedTuple):
     Defines the cost structure for different flexibility service
     scenarios based on economic optimization results.
     """
-    increase_discharge: Price   # Cost for increasing discharge - TSO pays operator (€/MWh)
-    decrease_discharge: Price   # Cost for decreasing discharge - operator pays TSO (€/MWh)
-    decrease_charge: Price      # Cost for decreasing charge - TSO pays operator (€/MWh)
-    increase_charge: Price      # Cost for increasing charge - operator pays TSO (€/MWh)
+    pass
+    # Cost for increasing discharge - TSO pays operator (€/MWh)
+    # Cost for decreasing discharge - operator pays TSO (€/MWh)
+    # Cost for decreasing charge - TSO pays operator (€/MWh)
+    # Cost for increasing charge - operator pays TSO (€/MWh)
 
 
 @dataclass

@@ -180,75 +180,54 @@ def calculate_flexibility_cost_prices(
     max_charg_price: Price, 
     min_gen_price: Price, 
     round_trip_efficiency: Efficiency
-) -> Tuple[Price, Price, Price, Price]:
+) -> ProductionCosts:
     """
-    Calculates production cost prices for TSO flexibility services in pumped hydro storage.
-    
-    The operator provides all flexibility services TO the TSO as the service customer.
-    Payment direction varies: TSO pays for services that primarily benefit the grid, operator pays for services that primarily benefit the plant.
+    Calculates production cost prices for flexibility services.
 
     Args:
         adjusted_prices: Market prices with 'adjusted_da_prices' column (€/MWh)
-        congestion_network_charges: Congestion and network charges (€/MWh)
-        max_charg_price: Maximum price for profitable charging (€/MWh) E.g. max hourly price for operating the pump
-        min_gen_price: Minimum price for profitable discharging (€/MWh) E.g. min hourly price for operating the turbine
-        round_trip_efficiency: Round-trip efficiency (0.0-1.0)
+        congestion_network_charges: Network charges (€/MWh)
+        max_charg_price: Maximum charging price threshold (€/MWh)
+        min_gen_price: Minimum generation price threshold (€/MWh)
+        round_trip_efficiency: Efficiency factor (0.0-1.0)
 
     Returns:
-        tuple: (
-            tso_pays_more_generation: Price TSO pays operator for extra electricity generation (€/MWh),
-            operator_pays_less_generation: Price operator pays TSO for reducing electricity generation (€/MWh),
-            tso_pays_less_pumping: Price TSO pays operator for reducing water pumping consumption (€/MWh),
-            operator_pays_more_pumping: Price operator pays TSO for increasing water pumping consumption (€/MWh)
-        )
-    """
-    # Identify economically viable slots and calculate mean prices
-    pump_slots = adjusted_prices[adjusted_prices['adjusted_da_prices'] <= max_charg_price]
-    mean_pump_price = pump_slots['adjusted_da_prices'].mean()
+        tuple: (price1, price2, price3, price4) representing four different service prices
+    """ 
+    # Filter data based on first price threshold and calculate mean of filtered values
+    # filtered_data_1 = filter adjusted_prices where condition <= max_charg_price
+    # mean_price_1 = calculate mean of filtered_data_1['adjusted_da_prices']
 
-    turbine_slots = adjusted_prices[adjusted_prices['adjusted_da_prices'] >= min_gen_price]
-    mean_turbine_price = turbine_slots['adjusted_da_prices'].mean()
+    # Filter data based on second price threshold and calculate mean of filtered values  
+    # filtered_data_2 = filter adjusted_prices where condition >= min_gen_price
+    # mean_price_2 = calculate mean of filtered_data_2['adjusted_da_prices']
 
-    # Calculate neutral price point between charging and discharging
-    neutral_price_midpoint = (max_charg_price + min_gen_price) / 2
+    # Calculate midpoint between the two threshold prices
+    # midpoint_price = calculate average of max_charg_price and min_gen_price
 
-    # Calculate component prices for each flexibility scenario
-    # Each service has two pricing approaches: technical cost-based vs market-based
+    # Calculate technical and market costs for service scenario 1
+    # technical_cost_1 = (midpoint_price + congestion_network_charges) / round_trip_efficiency
+    # market_cost_1 = mean_price_2
     
-    # SERVICE 1: TSO requests MORE electricity generation (TSO PAYS operator)
-    # TSO benefits: gets extra power for grid balancing
-    # Operator sacrifices: uses stored water suboptimally
-    increase_generation_technical_cost = (neutral_price_midpoint + congestion_network_charges) / round_trip_efficiency
-    increase_generation_market_price = mean_turbine_price
+    # Calculate technical and market costs for service scenario 2
+    # technical_cost_2 = (mean_price_1 + congestion_network_charges) / round_trip_efficiency
+    # market_cost_2 = midpoint_price
     
-    # SERVICE 2: TSO requests LESS electricity generation (OPERATOR PAYS TSO)
-    # Operator benefits: conserves water for higher-priced periods
-    # TSO sacrifices: loses planned generation capacity
-    decrease_generation_technical_cost = (mean_pump_price + congestion_network_charges) / round_trip_efficiency
-    decrease_generation_market_price = neutral_price_midpoint
+    # Calculate technical and market costs for service scenario 3
+    # technical_cost_3 = mean_price_2 * round_trip_efficiency - congestion_network_charges
+    # market_cost_3 = midpoint_price
     
-    # SERVICE 3: TSO requests LESS water pumping (TSO PAYS operator)
-    # TSO benefits: reduces grid consumption/load
-    # Operator sacrifices: stores less energy for future use
-    reduce_pumping_technical_cost = mean_turbine_price * round_trip_efficiency - congestion_network_charges
-    reduce_pumping_market_price = neutral_price_midpoint
+    # Calculate technical and market costs for service scenario 4
+    # technical_cost_4 = midpoint_price * round_trip_efficiency - congestion_network_charges
+    # market_cost_4 = mean_price_1
     
-    # SERVICE 4: TSO requests MORE water pumping (OPERATOR PAYS TSO)
-    # Operator benefits: gets to store more potentially valuable energy
-    # TSO sacrifices: accepts higher grid consumption
-    increase_pumping_technical_cost = neutral_price_midpoint * round_trip_efficiency - congestion_network_charges
-    increase_pumping_market_price = mean_pump_price
-    
-    # Determine final prices for each flexibility service
-    # TSO-pays services: use max() to ensure fair compensation to operator
-    # Operator-pays services: use min() to ensure reasonable cost to operator
-    
-    tso_pays_more_generation = Price(round(max(increase_generation_technical_cost, increase_generation_market_price), 2))  # TSO pays operator for extra generation
-    operator_pays_less_generation = Price(round(min(decrease_generation_technical_cost, decrease_generation_market_price), 2))  # Operator pays TSO for reduced generation
-    tso_pays_less_pumping = Price(round(max(reduce_pumping_technical_cost, reduce_pumping_market_price), 2))  # TSO pays operator for reduced pumping
-    operator_pays_more_pumping = Price(round(min(increase_pumping_technical_cost, increase_pumping_market_price), 2))  # Operator pays TSO for extra pumping
+    # Select final prices using max/min logic and round to 2 decimal places
+    # final_price_1 = Price(round(max(technical_cost_1, market_cost_1), 2))
+    # final_price_2 = Price(round(min(technical_cost_2, market_cost_2), 2))
+    # final_price_3 = Price(round(max(technical_cost_3, market_cost_3), 2))
+    # final_price_4 = Price(round(min(technical_cost_4, market_cost_4), 2))
 
-    return tso_pays_more_generation, operator_pays_less_generation, tso_pays_less_pumping, operator_pays_more_pumping
+    # return final_price_1, final_price_2, final_price_3, final_price_4
 
 
 def create_flexibility_costs(
