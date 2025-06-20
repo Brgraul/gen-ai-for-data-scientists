@@ -6,11 +6,13 @@ A Python library that calculates **how much money a battery owner loses** when t
 
 **Prerequisites**: Python 3.8+ is required.
 
-1. **Clone the repository** (if not already done):
+1. **Navigate to the project directory**:
    ```bash
-   git clone <repository-url>
-   cd energy_flexibility
+   # Make sure you're in the 02-use_case directory
+   cd /path/to/your/repo/02-use_case
    ```
+   
+   **⚠️ Important**: All commands below must be run from the `02-use_case` directory.
 
 2. **Install the package in development mode**:
    ```bash
@@ -31,6 +33,26 @@ pip install -e ".[dev]"
 
 This includes additional tools for testing and development (pytest, black, flake8, mypy).
 
+## Verification
+
+After installation, verify everything is working correctly:
+
+```bash
+# 1. Verify you're in the correct directory
+pwd
+# Should show: /path/to/your/repo/02-use_case
+
+# 2. Test package import
+python -c "from energy_flexibility import FlexibilityCalculator, Config; print('✅ Package import successful!')"
+
+# 3. Run a quick test
+python -m pytest tests/test_config.py -v
+
+# 4. Check package structure
+ls energy_flexibility/
+# Should show: __init__.py and core/
+```
+
 ## Quick Start
 
 ```python
@@ -44,13 +66,12 @@ config = Config(
     discharge_power=15.0,  # MW
     charge_power=15.0,     # MW
     efficiency=0.9
-)****
+)
 
 # Run analysis
 calculator = FlexibilityCalculator(config)
 results = calculator.calculate()
 ```
-
 
 ## What It Does
 
@@ -87,9 +108,9 @@ results = calculator.calculate()
 1. **Price Data** (Excel): Day-ahead and intraday prices with 90+ days history
 2. **Schedule File** (Excel): Operational plan with 15-minute intervals
 
-**Generate Sample Data:**
-```python
-python energy_flexibility/generate_sample_data.py
+**Generate Sample Data** (run from `02-use_case` directory):
+```bash
+python scripts/generate_sample_data.py
 ```
 
 ## Advanced Usage
@@ -106,18 +127,28 @@ for efficiency in [0.85, 0.90, 0.95]:
     pass
 ```
 
-## Architecture
+## Package Structure
 
 ```
-energy_flexibility/
-├── calculator.py         # Main facade
-├── optimization.py       # Economic algorithms  
-├── market_analysis.py    # Price forecasting
-├── cost_calculation.py   # Financial models
-├── reporting.py          # TSO compliance
-├── data_loader.py        # Data processing
-├── config.py            # Configuration
-└── tests/               # Unit tests
+02-use_case/
+├── energy_flexibility/           # Main package directory
+│   ├── __init__.py              # Package interface
+│   └── core/                    # Core modules
+│       ├── __init__.py          # Core package interface
+│       ├── calculator.py        # Main facade
+│       ├── optimization.py      # Economic algorithms  
+│       ├── market_analysis.py   # Price forecasting
+│       ├── cost_calculation.py  # Financial models
+│       ├── reporting.py         # TSO compliance
+│       ├── data_loader.py       # Data processing
+│       ├── config.py           # Configuration
+│       └── models.py           # Data models
+├── tests/                       # Unit tests
+├── examples/                    # Usage examples
+├── data/                       # Sample data
+├── scripts/                    # Utility scripts
+├── pyproject.toml              # Package configuration
+└── README.md                   # This file
 ```
 
 ## Output
@@ -128,9 +159,49 @@ energy_flexibility/
 
 ## Testing
 
+**⚠️ Important**: Run all test commands from the `02-use_case` directory.
+
+### Run all tests:
 ```bash
-python -m pytest energy_flexibility/tests/
+python -m pytest tests/
 ```
+
+### Run specific test file:
+```bash
+python -m pytest tests/test_optimization.py -v
+```
+
+### Run with coverage:
+```bash
+python -m pytest tests/ --cov=energy_flexibility
+```
+
+### Run tests with detailed output:
+```bash
+python -m pytest tests/ -v --tb=short
+```
+
+## Development Workflow
+
+1. **Navigate to project directory**:
+   ```bash
+   cd /path/to/your/repo/02-use_case
+   ```
+
+2. **Install in development mode** (if not already done):
+   ```bash
+   pip install -e .
+   ```
+
+3. **Run tests** to verify everything works:
+   ```bash
+   python -m pytest tests/
+   ```
+
+4. **Run examples**:
+   ```bash
+   python examples/basic_usage.py
+   ```
 
 ## Use Cases
 

@@ -51,9 +51,6 @@ Documentation = "https://energy-flexibility.readthedocs.io/"
 [tool.setuptools]
 packages = ["energy_flexibility", "energy_flexibility.core"]
 
-[tool.setuptools.package-dir]
-energy_flexibility = "."
-
 [tool.black]
 line-length = 88
 target-version = ['py38']
