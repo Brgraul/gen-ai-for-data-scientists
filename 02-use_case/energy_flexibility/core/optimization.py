@@ -194,40 +194,44 @@ def calculate_flexibility_cost_prices(
     Returns:
         tuple: (price1, price2, price3, price4) representing four different service prices
     """ 
-    # Filter data based on first price threshold and calculate mean of filtered values
-    # filtered_data_1 = filter adjusted_prices where condition <= max_charg_price
-    # mean_price_1 = calculate mean of filtered_data_1['adjusted_da_prices']
+    # Step 1: Find two average prices from the market:
+    # - First, calculate the average price during times when it's cheap to charge the battery
+    #   (these are the prices lower than or equal to the max_charg_price)
+    # - Then, calculate the average price during times when it's good to sell energy
+    #   (these are the prices higher than or equal to the min_gen_price)
 
-    # Filter data based on second price threshold and calculate mean of filtered values  
-    # filtered_data_2 = filter adjusted_prices where condition >= min_gen_price
-    # mean_price_2 = calculate mean of filtered_data_2['adjusted_da_prices']
+    # Step 2: Calculate the average of the max charging price and the min generation price.
+    # - This gives us a middle point between "cheap enough to charge" and "good enough to sell"
+    # - It acts like a neutral or reference price we can use for comparisons.
 
-    # Calculate midpoint between the two threshold prices
-    # midpoint_price = calculate average of max_charg_price and min_gen_price
+    # Step 3: Use these values to estimate the cost of operating the battery in four different cases.
+    # Each case has two estimates:
+    # - a "technical cost" (based on efficiency and grid costs)
+    # - a "market-based cost" (based on expected market price)
 
-    # Calculate technical and market costs for service scenario 1
-    # technical_cost_1 = (midpoint_price + congestion_network_charges) / round_trip_efficiency
-    # market_cost_1 = mean_price_2
-    
-    # Calculate technical and market costs for service scenario 2
-    # technical_cost_2 = (mean_price_1 + congestion_network_charges) / round_trip_efficiency
-    # market_cost_2 = midpoint_price
-    
-    # Calculate technical and market costs for service scenario 3
-    # technical_cost_3 = mean_price_2 * round_trip_efficiency - congestion_network_charges
-    # market_cost_3 = midpoint_price
-    
-    # Calculate technical and market costs for service scenario 4
-    # technical_cost_4 = midpoint_price * round_trip_efficiency - congestion_network_charges
-    # market_cost_4 = mean_price_1
-    
-    # Select final prices using max/min logic and round to 2 decimal places
-    # final_price_1 = Price(round(max(technical_cost_1, market_cost_1), 2))
-    # final_price_2 = Price(round(min(technical_cost_2, market_cost_2), 2))
-    # final_price_3 = Price(round(max(technical_cost_3, market_cost_3), 2))
-    # final_price_4 = Price(round(min(technical_cost_4, market_cost_4), 2))
+    # --- Cost Case 1: Charge at the midpoint, discharge at high prices ---
+    # Technical cost: (midpoint + network charges) divided by efficiency
+    # Market-based cost: average price during high-price periods
 
-    # return final_price_1, final_price_2, final_price_3, final_price_4
+    # --- Cost Case 2: Charge at low prices, discharge at the midpoint ---
+    # Technical cost: (average low price + network charges) divided by efficiency
+    # Market-based cost: the midpoint
+
+    # --- Cost Case 3: Charge at high prices, discharge at the midpoint ---
+    # Technical cost: average high price × efficiency, minus network charges
+    # Market-based cost: the midpoint
+
+    # --- Cost Case 4: Charge at the midpoint, discharge at low prices ---
+    # Technical cost: midpoint × efficiency, minus network charges
+    # Market-based cost: average low price
+
+    # Step 4: For each case, pick the safer estimate:
+    # - If it's a charging cost (case 1 and 2), use the *higher* of the technical and market cost
+    # - If it's a discharging cost (case 3 and 4), use the *lower* of the two
+    # Round each final result to 2 decimal places
+
+    # Return the four prices as a tuple
+    pass
 
 
 def create_flexibility_costs(

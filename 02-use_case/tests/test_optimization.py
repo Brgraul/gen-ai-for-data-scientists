@@ -147,61 +147,52 @@ class TestOptimization:
         # Lower network charges should enable more profitable operations
         assert result_low_charges[2] >= result_high_charges[2]  # total_turbine_energy
     
-    def test_production_cost_pricing_mathematical_correctness(self):
+    def test_flexibility_cost_mathematical_correctness(self):
         """Test TSO production cost pricing formulas for mathematical correctness."""
         
-        # TODO: Implement comprehensive tests for production cost pricing formulas
-        # This function should test the calculate_flexibility_cost_prices function
+        # TODO 2: Implement tests that check the mathematical correctness of the flexibility cost pricing formulas.
+        # There's no correct answer, but think about logical checks that the data must fulfill.
         
-        # Test Setup Suggestions:
+        
+        # === 
+        # STEP 1: Arrange (Test Setup) 
+        # In the test step, we should prepare the data and parameters needed to test the pricing formulas.
+        # ===
+
         # - Create test data with a known price distribution (e.g., range 20-90)
+        # These are expected as the values of a "adjusted_da_prices" column in a DataFrame
+
         # - Set clear boundary prices to create distinct regimes (pump ≤ X, turbine ≥ Y)
-        # - Use realistic efficiency values (0.8-0.95) and network charges
+        # This are the minimum energy price that makes it worth it to turn the turbine on, 
+        # and the maximum energy price we're willing to pay to run the pump (charge energy)
         
-        # Test Category 1: Basic Output Validation
-        # - Verify all returned prices are positive (economic prices can't be negative)
-        # - Check that the function returns exactly 4 values as expected
-        # - Ensure no NaN or infinite values in results
-        
-        # Test Category 2: Mathematical Formula Verification
-        # - Manually calculate expected values using the pricing formulas
-        # - For pump/turbine slots, compute mean prices in each regime
-        # - Calculate middle value between boundaries: (pump_boundary + turbine_boundary) / 2
-        # - Verify each of the 4 pricing formulas:
-        #   * Increasing discharge: TSO pays plant - should use max() logic
-        #   * Decreasing discharge: Plant pays TSO - should use min() logic  
-        #   * Decreasing charge: TSO pays plant - involves efficiency multiplication
-        #   * Increasing charge: Plant pays TSO - involves efficiency and network charge adjustments
-        # - Compare calculated expectations with actual function outputs (within tolerance)
-        
-        # Test Category 3: Economic Logic Consistency
-        # - When TSO pays plant (positive direction), prices should generally be higher
-        # - When plant pays TSO (negative direction), prices should generally be lower
-        # - Test relationships between the 4 pricing scenarios (which should be > or < others)
-        # - Verify that network charges and efficiency losses are properly incorporated
-        
-        # Test Category 4: Boundary Sensitivity Analysis
-        # - Test with different boundary price combinations (tight vs wide boundaries)
-        # - Verify that changing boundaries produces different cost structures
-        # - Check edge cases where boundaries are very close together or far apart
-        
-        # Test Category 5: Parameter Sensitivity
-        # - Test how efficiency changes affect pricing (higher efficiency → different costs)
-        # - Verify network charge impacts on final prices
-        # - Test with extreme parameter values to ensure robustness
-        
-        # Test Category 6: Edge Cases
+        # - Create variables for the efficiency of the plant, and the network & congestion (cnNNe) charges
+
+
+
+        # === 
+        # STEP 2: Act 
+        # In the test step, we run the code that shoul be tested.
+        # ===
+
+        # Remember, this is a test for the "calculate_flexibility_cost_prices" function
+
+
+
+        # === 
+        # STEP 3: Assert
+        # In the test step, we check that the output of the function matches our expectations.
+        # We will have to turn each of our business and technical expectations into one (or more) assertions.
+        # ===
+
+        # Some inspiration for topics you could check: 
+        # - Are all returned prices positive? (economic prices can't be negative)
+        # - Does the function return exactly 4 values as expected?
+        # - Are there no NaN or infinite values in the results?
         # - What happens when no prices fall in pump or turbine regimes?
-        # - Test with uniform prices (no price spread)
-        # - Test with very high or very low efficiency values
-        # - Test with zero or very high network charges
         
-        # Implementation Tips:
-        # - Use small tolerance values (e.g., 0.1) when comparing floating point calculations
-        # - Create helper variables for expected calculations to make tests readable
-        # - Test both the mathematical correctness AND the economic intuition
-        # - Consider using parametrized tests for testing multiple scenarios
-        
+
+
         pass
 
     def test_production_cost_calculation(self):
