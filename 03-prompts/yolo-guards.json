@@ -1,0 +1,6 @@
+{
+    // Show a diff lens for every Copilot in-place edit.
+    "github.copilot.inlineSuggest.enableDiffCodeLens": true,
+    // Forces you to hit Tab (or a custom binding) before a completion is inserted.
+    "editor.acceptSuggestionOnEnter": "off" // or "smart"
+}
