@@ -104,8 +104,8 @@ class OptionPrices:
 # =============================================================================
 # SECTION 3: OPTIMIZATION RESULT TYPES
 # =============================================================================
-
-class BoundaryPrices(NamedTuple):
+@dataclass
+class BoundaryPrices:
     """
     Optimal economic boundary prices from the optimization algorithm.
     
@@ -117,14 +117,15 @@ class BoundaryPrices(NamedTuple):
     turbine_energy: Energy  # Total planned discharge energy (MWh)
     pump_energy: Energy     # Total planned charge energy (MWh)
 
-
-class ProductionCosts(NamedTuple):
+@dataclass
+class ProductionCosts:
     """
     Production cost prices for TSO flexibility services.
     
     Defines the cost structure for different flexibility service
     scenarios based on economic optimization results.
     """
+    # TODO 1: Define the class structure for production costs
     pass
     # Cost for increasing discharge - TSO pays operator (€/MWh)
     # Cost for decreasing discharge - operator pays TSO (€/MWh)
