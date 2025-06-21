@@ -105,7 +105,8 @@ class OptionPrices:
 # SECTION 3: OPTIMIZATION RESULT TYPES
 # =============================================================================
 
-class BoundaryPrices(NamedTuple):
+@dataclass
+class BoundaryPrices:
     """
     Optimal economic boundary prices from the optimization algorithm.
     
@@ -117,8 +118,8 @@ class BoundaryPrices(NamedTuple):
     turbine_energy: Energy  # Total planned discharge energy (MWh)
     pump_energy: Energy     # Total planned charge energy (MWh)
 
-
-class ProductionCosts(NamedTuple):
+@dataclass
+class ProductionCosts:
     """
     Production cost prices for TSO flexibility services.
     
