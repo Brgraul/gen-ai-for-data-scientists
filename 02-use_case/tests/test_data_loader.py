@@ -18,21 +18,16 @@ from energy_flexibility.core.data_loader import load_and_prepare_data, expand_da
 class TestDataLoader:
     
     def test_load_and_prepare_data_excel_parsing(self):
-        """Test Excel parsing and column structure - most common failure."""
-        # Create valid Excel structure matching expected format
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+        """Test parquet parsing and column structure - most common failure."""
+        # Create valid parquet structure matching expected format
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as temp_file:
             temp_path = temp_file.name
         
         try:
             # Create test data with expected structure
-            # First 6 rows are headers (skipped), then data starts
             test_data = []
             
-            # Add 6 header rows
-            for i in range(6):
-                test_data.append(['Header'] * 11)
-            
-            # Add actual data rows
+            # Add actual data rows (no header rows needed for parquet)
             base_time = datetime(2023, 4, 30, 0, 0)
             for hour in range(24):
                 da_time = base_time + timedelta(hours=hour)
@@ -49,9 +44,9 @@ class TestDataLoader:
                         51.0 + hour * 2      # Column 10: D-1 prices
                     ])
             
-            # Create DataFrame and save to Excel
+            # Create DataFrame and save to parquet
             df = pd.DataFrame(test_data)
-            df.to_excel(temp_path, index=False, header=False)
+            df.to_parquet(temp_path, index=False)
             
             # Test successful parsing
             result = load_and_prepare_data(temp_path)
@@ -149,46 +144,48 @@ class TestDataLoader:
     
     def test_data_type_conversions(self):
         """Test datetime conversion failures - breaks all temporal calculations."""
-        # Test with valid Excel file but problematic datetime values
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+        # Test with valid parquet file but problematic datetime values
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as temp_file:
             temp_path = temp_file.name
-        
+
         try:
-            # Create test data with mixed valid/invalid datetime values
+            # Create test data with consistent datetime types (parquet is stricter than Excel)
             test_data = []
-            
-            # Add 6 header rows
-            for i in range(6):
-                test_data.append(['Header'] * 11)
-            
+
             # Add data with valid datetimes
-            valid_time = datetime(2023, 4, 30, 10, 0)
+            valid_time1 = datetime(2023, 4, 30, 10, 0)
             test_data.append([
                 'col0',
-                valid_time,              # Valid DA time
+                valid_time1,              # Valid DA time
                 50.0,
                 'col3', 'col4', 'col5', 'col6',
-                valid_time,              # Valid IDA time  
+                valid_time1,              # Valid IDA time
                 52.0,
-                valid_time,              # Valid D-1 time
+                valid_time1,              # Valid D-1 time
                 51.0
             ])
-            
-            # Add data with string that should convert to datetime
+
+            # Add data with another valid datetime (convert string to datetime before adding)
+            valid_time2 = datetime(2023, 4, 30, 11, 0)
+            ida_time2 = datetime(2023, 4, 30, 11, 15)
             test_data.append([
                 'col0',
-                '2023-04-30 11:00:00',   # String datetime
+                valid_time2,             # Valid DA time (datetime object)
                 55.0,
                 'col3', 'col4', 'col5', 'col6',
-                '2023-04-30 11:15:00',   # String datetime
+                ida_time2,               # Valid IDA time (datetime object)
                 57.0,
-                '2023-04-30 11:15:00',   # String datetime
+                ida_time2,               # Valid D-1 time (datetime object)
                 56.0
             ])
-            
+
             df = pd.DataFrame(test_data)
-            df.to_excel(temp_path, index=False, header=False)
-            
+            # Ensure datetime columns are properly typed before saving to parquet
+            df[1] = pd.to_datetime(df[1])  # DA time column
+            df[7] = pd.to_datetime(df[7])  # IDA time column
+            df[9] = pd.to_datetime(df[9])  # D-1 time column
+            df.to_parquet(temp_path, index=False)
+
             # Test successful conversion
             result = load_and_prepare_data(temp_path)
             
@@ -209,9 +206,9 @@ class TestDataLoader:
                     assert result['ida_time'].iloc[0] == datetime(2023, 4, 30, 11, 15)
                 else:
                     # It's the valid_time
-                    assert result['da_time'].iloc[0] == valid_time
-                    assert result['ida_time'].iloc[0] == valid_time
-                    assert result['d1_time'].iloc[0] == valid_time
+                    assert result['da_time'].iloc[0] == valid_time1
+                    assert result['ida_time'].iloc[0] == valid_time1
+                    assert result['d1_time'].iloc[0] == valid_time1
             elif len(result) >= 2:
                 # Multiple rows loaded - check both
                 # Based on the error, it seems the first row is the string datetime, not valid_time
@@ -220,14 +217,14 @@ class TestDataLoader:
                     assert result['da_time'].iloc[0] == datetime(2023, 4, 30, 11, 0)
                     assert result['ida_time'].iloc[0] == datetime(2023, 4, 30, 11, 15)
                     # Second row should be valid_time
-                    assert result['da_time'].iloc[1] == valid_time
-                    assert result['ida_time'].iloc[1] == valid_time
-                    assert result['d1_time'].iloc[1] == valid_time
+                    assert result['da_time'].iloc[1] == valid_time2
+                    assert result['ida_time'].iloc[1] == ida_time2
+                    assert result['d1_time'].iloc[1] == ida_time2
                 else:
                     # Original expectation - first row is valid_time
-                    assert result['da_time'].iloc[0] == valid_time
-                    assert result['ida_time'].iloc[0] == valid_time
-                    assert result['d1_time'].iloc[0] == valid_time
+                    assert result['da_time'].iloc[0] == valid_time1
+                    assert result['ida_time'].iloc[0] == valid_time1
+                    assert result['d1_time'].iloc[0] == valid_time1
                     # Second row is string datetime
                     assert result['da_time'].iloc[1] == datetime(2023, 4, 30, 11, 0)
                     assert result['ida_time'].iloc[1] == datetime(2023, 4, 30, 11, 15)

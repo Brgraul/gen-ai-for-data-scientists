@@ -18,6 +18,7 @@ from .models import (
     Price, Energy
 )
 
+from memory_profiler import profile
 
 class FlexibilityCalculator:
     """
@@ -44,6 +45,7 @@ class FlexibilityCalculator:
         self._option_prices: Optional[pd.DataFrame] = None
         self._operational_schedule_data: Optional[pd.DataFrame] = None
         
+    @profile
     def calculate(self) -> pd.DataFrame:
         """
         Main method that performs the complete flexibility cost calculation.
@@ -154,6 +156,7 @@ class FlexibilityCalculator:
 
         return aggregated_costs
     
+    @profile
     def load_market_data(self) -> pd.DataFrame:
         """Load and prepare market data from Excel file."""
         if self._market_data is None:
@@ -161,6 +164,7 @@ class FlexibilityCalculator:
         return self._market_data
         
     
+    @profile
     def find_boundary_prices(self, market_data: Optional[pd.DataFrame] = None) -> Tuple[Price, Price, Energy, Energy]:
         """
         Find optimal boundary prices for charging and discharging.
@@ -191,6 +195,7 @@ class FlexibilityCalculator:
             max_full_load_hours=self.config.max_discharge_hours
         )
     
+    @profile
     def calculate_flexibility_costs(self, market_data: pd.DataFrame, boundary_prices: Tuple[Price, Price, Energy, Energy]) -> Tuple[Price, Price, Price, Price]:
         """
         Calculate costs incurred by the TSO for flexibility services depening on the comparison between the optimal operation for the battery and the market price.
@@ -217,15 +222,12 @@ class FlexibilityCalculator:
             round_trip_efficiency=self.config.efficiency
         )
     
+    @profile
     def _load_schedule_data(self) -> pd.DataFrame:
-        """Load operational schedule data from Excel file."""
-        operational_schedule_data = pd.read_excel(
-            self.config.schedule_file, 
-            sheet_name='intern', 
-            skiprows=12
-        )
+        """Load operational schedule data from parquet file."""
+        operational_schedule_data = pd.read_parquet(self.config.schedule_file)
         
-        # Rename columns for easier access
+        # Rename columns for easier access (parquet file already has the data processed)
         operational_schedule_data.rename(columns={
             operational_schedule_data.columns[0]: 'time',
             operational_schedule_data.columns[1]: 'Pmax',
@@ -240,6 +242,7 @@ class FlexibilityCalculator:
         
         return operational_schedule_data
     
+    @profile
     def _generate_tso_report(self) -> None:
         """Generate TSO compliance report."""
         if self._operational_schedule_data is None or self._option_prices is None or self._flexibility_service_costs is None:

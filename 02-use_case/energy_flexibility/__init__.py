@@ -16,8 +16,8 @@ Quick Start:
     
     config = Config(
         delivery_date="2024-01-15",
-        prices_file="path/to/prices.xlsx",
-        schedule_file="path/to/schedule.xlsx"
+            prices_file="path/to/prices.parquet",
+    schedule_file="path/to/schedule.parquet"
     )
     
     calculator = FlexibilityCalculator(config)

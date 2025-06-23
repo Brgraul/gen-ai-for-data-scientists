@@ -6,10 +6,10 @@ schedules and calculating production costs for various TSO flexibility scenarios
 """
 
 import pandas as pd
+import numpy as np
 from typing import Tuple
 
 from .models import BoundaryPrices, ProductionCosts, Power, Price, Energy, Efficiency
-
 
 def find_optimal_boundary_prices_turbine_first(
     adjusted_prices: pd.DataFrame, 
@@ -20,7 +20,7 @@ def find_optimal_boundary_prices_turbine_first(
     max_full_load_hours: float
 ) -> Tuple[Price, Price, Energy, Energy]:
     """
-    Determines optimal economic boundary prices for pumped hydro storage using a greedy turbine-first approach.
+    Determines optimal economic boundary prices for pumped hydro storage using a vectorized turbine-first approach.
     
     Args:
         adjusted_prices: Intraday prices with columns:
@@ -51,91 +51,94 @@ def find_optimal_boundary_prices_turbine_first(
     turbine_slots = adjusted_prices.sort_values(by='adjusted_da_prices', ascending=False).reset_index(drop=True)
     pump_slots = adjusted_prices.sort_values(by='adjusted_da_prices', ascending=True).reset_index(drop=True)
 
-    # Tracking variables for optimization process
+    # Vectorized approach: calculate all profitable combinations at once
+    turbine_prices = turbine_slots['adjusted_da_prices'].values
+    pump_prices = pump_slots['adjusted_da_prices'].values
+    
+    # Calculate adjusted prices for profitability check
+    adjusted_turbine_prices = turbine_prices * efficiency
+    adjusted_pump_prices = pump_prices + congestion_network_charges
+    
+    # Find maximum number of turbine slots we can use (energy constraint)
+    max_turbine_slots = int(np.ceil(max_total_turbine_energy / turbine_energy_per_slot))
+    max_turbine_slots = min(max_turbine_slots, len(turbine_slots))
+    
+    # Vectorized profitability matrix: turbine vs pump combinations
+    # Broadcasting to create all possible combinations
+    turbine_prices_matrix = adjusted_turbine_prices[:max_turbine_slots, np.newaxis]
+    pump_prices_matrix = adjusted_pump_prices[np.newaxis, :]
+    
+    # Create profitability mask
+    profitable_mask = turbine_prices_matrix > pump_prices_matrix
+    
+    # Find the optimal matching using vectorized operations
     total_power_generation_energy = Energy(0.0)
     total_pumping_energy = Energy(0.0)
     minimum_generation_price = None
     maximum_pumping_price = None
-    any_iteration_occurred = False
-
-    pump_index = 0
-    pump_slot_remaining_capacity = pump_energy_per_slot
-
-    # Main optimization loop: match high-price discharge with low-price charge opportunities
-    for i, turbine_row in turbine_slots.iterrows():
+    
+    # Track remaining pump capacity across slots
+    pump_remaining_capacity = np.full(len(pump_slots), pump_energy_per_slot)
+    
+    # Process turbine slots in order (highest price first)
+    for turbine_idx in range(max_turbine_slots):
         if total_power_generation_energy >= max_total_turbine_energy:
             break
-
-        turbine_price = Price(turbine_row['adjusted_da_prices'])
-        adjusted_turbine_price = turbine_price * efficiency  # Account for round-trip losses
-        required_turbine_energy = min(turbine_energy_per_slot, max_total_turbine_energy - total_power_generation_energy)
-
-        print(f"\n=== Turbine Slot {i+1} ===")
-        print(f"Turbine price: {turbine_price} €/MWh | Max energy this slot: {required_turbine_energy} MWh")
-
-        # Find matching pump slots for current turbine slot
-        while required_turbine_energy > 0 and pump_index < len(pump_slots):
-            pump_price = Price(pump_slots.loc[pump_index, 'adjusted_da_prices'])
-            adjusted_pump_price = pump_price + congestion_network_charges  # Include network charges
-
-            print(f"\n  → Considering Pump Slot {pump_index+1}")
-            print(f"    Pump price: {pump_price} €/MWh ")
             
-
-            # Check profitability
-            if adjusted_turbine_price <= adjusted_pump_price:
-                print(f"Pump price {pump_price} too high vs turbine value. Breaking pump loop.")
+        turbine_price = Price(turbine_prices[turbine_idx])
+        required_turbine_energy = min(
+            turbine_energy_per_slot, 
+            max_total_turbine_energy - total_power_generation_energy
+        )
+        
+        # Find profitable pump slots using vectorized operations
+        profitable_pumps = profitable_mask[turbine_idx]
+        available_capacity = pump_remaining_capacity > 1e-6
+        valid_pumps = profitable_pumps & available_capacity
+        
+        if not np.any(valid_pumps):
+            break  # No more profitable pump slots
+        
+        # Get valid pump indices sorted by price (lowest first)
+        valid_pump_indices = np.where(valid_pumps)[0]
+        
+        # Match energy requirements with available pump capacity
+        remaining_demand = required_turbine_energy
+        
+        for pump_idx in valid_pump_indices:
+            if remaining_demand <= 1e-6:
                 break
-
-            usable_turbine_energy_from_slot = pump_slot_remaining_capacity * efficiency
-            energy_to_discharge = min(required_turbine_energy, usable_turbine_energy_from_slot)
+                
+            available_pump_energy = pump_remaining_capacity[pump_idx]
+            usable_turbine_energy = available_pump_energy * efficiency
+            
+            energy_to_discharge = min(remaining_demand, usable_turbine_energy)
             actual_pump_energy_used = energy_to_discharge / efficiency
-           
-            print(f"    ✅ Matching:")
-            print(f"       The energy left from pump slot: {pump_slot_remaining_capacity:.3f} MWh")
-            print(f"       The energy that can be discharged from slot: {usable_turbine_energy_from_slot:.3f} MWh")
-            print(f"       Discharging: {energy_to_discharge:.3f} MWh → Requires pump energy: {actual_pump_energy_used:.3f} MWh")
-
+            
             # Update totals
             total_power_generation_energy += energy_to_discharge
             total_pumping_energy += actual_pump_energy_used
-            required_turbine_energy -= energy_to_discharge
-            pump_slot_remaining_capacity -= actual_pump_energy_used
-
+            remaining_demand -= energy_to_discharge
+            pump_remaining_capacity[pump_idx] -= actual_pump_energy_used
+            
             # Update price thresholds
             minimum_generation_price = turbine_price
-
-            # If pump slot exhausted, go to next
-            if pump_slot_remaining_capacity <= 1e-6:
-                maximum_pumping_price = pump_price
-                pump_index += 1
-                pump_slot_remaining_capacity = pump_energy_per_slot
-
-        if required_turbine_energy > 0:
-            print(f"Could not fully cover turbine slot {i+1}. Remaining energy: {required_turbine_energy:.3f} MWh")
-            break  # No more affordable pump energy → stop
-
-        any_iteration_occurred = True  # Mark that we had at least one valid iteration
+            if pump_remaining_capacity[pump_idx] <= 1e-6:
+                maximum_pumping_price = Price(pump_prices[pump_idx])
+        
+        if remaining_demand > 1e-6:
+            break  # Could not satisfy energy requirement
     
-    if not any_iteration_occurred:
+    # Handle case where no iterations occurred
+    if minimum_generation_price is None:
         mean_price = adjusted_prices['adjusted_da_prices'].mean()
         fallback_pump_price = mean_price + ((mean_price * (1 - efficiency) + congestion_network_charges) / (1 + efficiency))
         fallback_turbine_price = mean_price - ((mean_price * (1 - efficiency) + congestion_network_charges) / (1 + efficiency))
-
-        print("\nNo valid iterations, applying special case prices:")
-        print(f"Special case turbine price: {fallback_turbine_price:.3f} euro/MWh")
-        print(f"Special case pump price: {fallback_pump_price:.3f} euro/MWh")
-
+        
         minimum_generation_price = Price(fallback_turbine_price)
         maximum_pumping_price = Price(fallback_pump_price)
         total_power_generation_energy = Energy(0.0)
         total_pumping_energy = Energy(0.0)
-
-    print("\nFinal Results:")
-    print(f"Minimum power generation price: {minimum_generation_price}")
-    print(f"Maximum pumping price: {maximum_pumping_price}")
-    print(f"Total power generation energy discharged: {total_power_generation_energy} MWh")
-    print(f"Total pumping energy used: {total_pumping_energy:.3f} MWh")
 
     return Price(minimum_generation_price), Price(maximum_pumping_price), total_power_generation_energy, total_pumping_energy
 

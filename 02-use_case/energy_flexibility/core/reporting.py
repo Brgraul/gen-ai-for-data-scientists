@@ -111,23 +111,18 @@ def values_to_tso(
         'Anteiliger Werteverbrauch pro anrechenbare Betriebsstunde [Lost value per hour] (euro/h)': [value_lost_per_hour]
     })
 
-    # Ensure the columns exist in operational_schedule_data and are float64
-    operational_schedule_data['Option price pump (euro/h)'] = 0.0  # Explicitly define as float
-    operational_schedule_data['Option price turbine (euro/h)'] = 0.0  # Explicitly define as float
+    # Vectorized calculation of option prices
+    Pmax = operational_schedule_data["Pmax"]
+    Vmax = operational_schedule_data["Vmax"]
 
-    # Loop through each row of operational_schedule_data
-    for index, row in operational_schedule_data.iterrows():
-        Pmax = row["Pmax"]
-        Vmax = row["Vmax"]
+    # Calculate option prices using vectorized operations
+    option_price_pump = charge_option_price.values * Pmax.values
+    option_price_turb = discharge_option_price.values * Vmax.values
 
-        # Calculate the option prices based on the adjusted prices and the available power
-        option_price_pump = float(charge_option_price.iloc[index]) * Pmax
-        option_price_turb = float(discharge_option_price.iloc[index]) * Vmax
-
-        # Store values in DataFrame, ensuring proper data type
-        operational_schedule_data.loc[index, 'Entgangener Deckungsbeitrag für Pumpbetrieb [Opportunity price pump] (euro/h)'] = option_price_pump
-        operational_schedule_data.loc[index, 'Entgangener Deckungsbeitrag für Turbinenbetrieb [Opportunity price turbine] (euro/h)'] = option_price_turb
-        operational_schedule_data.loc[index, 'Entgangener Deckungsbeitrag total [Opportunity price total] (euro/h)'] = option_price_turb + option_price_pump
+    # Store vectorized results in DataFrame
+    operational_schedule_data['Entgangener Deckungsbeitrag für Pumpbetrieb [Opportunity price pump] (euro/h)'] = option_price_pump
+    operational_schedule_data['Entgangener Deckungsbeitrag für Turbinenbetrieb [Opportunity price turbine] (euro/h)'] = option_price_turb
+    operational_schedule_data['Entgangener Deckungsbeitrag total [Opportunity price total] (euro/h)'] = option_price_turb + option_price_pump
 
     # Select columns for export
     selected_columns = [
