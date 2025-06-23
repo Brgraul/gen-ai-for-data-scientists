@@ -8,20 +8,14 @@ flexibility costs for pumped hydro storage systems.
 
 import os
 
-from energy_flexibility import FlexibilityCalculator
-from energy_flexibility.core.config import Config
-from memory_profiler import profile
-
-# Note: Using FlexibilityCalculatorOptimized for 129x faster imports (7ms vs 900ms)
-# and lazy loading of heavy dependencies (pandas/scipy) only when needed
+from energy_flexibility import FlexibilityCalculator, Config
 
 # Base paths to match main.py structure
 base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up two levels to reach root
-PRICES_FILE = os.path.join(base, "data", "preise.parquet")
-SCHEDULE_FILE = os.path.join(base, "data", "fahrplan.parquet")
+PRICES_FILE = os.path.join(base, "data", "preise.xlsx")
+SCHEDULE_FILE = os.path.join(base, "data", "fahrplan.xls")
 OUTPUT_PATH = os.path.join(base, "output", "output.xlsx")
 
-@profile
 def main():
     """
     Example of using the FlexibilityCalculator with the new architecture.
@@ -101,13 +95,14 @@ def demonstrate_individual_components():
     print("Individual component access completed!")
 
 if __name__ == "__main__":
-
-    import cProfile
-
-    profiler = cProfile.Profile()
-    profiler.enable() 
-
-    main()
-
-    profiler.disable()
-    profiler.dump_stats("profile.prof")
+    print("Energy Flexibility Library - Example Usage")
+    print("=" * 50)
+    
+    # Main calculation example
+    exit_code = main()
+    
+    # Individual components example
+    if exit_code == 0:
+        demonstrate_individual_components()
+    
+    exit(exit_code) 

@@ -30,7 +30,8 @@ classifiers = [
 dependencies = [
     "pandas>=1.5.0",
     "numpy>=1.21.0",
-    "openpyxl>=3.0.0"
+    "scipy>=1.7.0",
+    "openpyxl>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -39,17 +40,13 @@ dev = [
     "pytest-cov",
     "black",
     "flake8",
-dev = [
-    "pytest>=6.0",
-    "pytest-cov",
-    "black",
-    "flake8",
     "mypy",
-    "bandit>=1.7.7",
-    "pip-audit>=2.7.2",
-    "memory-profiler>=0.61.0",
-    "snakeviz>=2.2.2"
 ]
+
+[project.urls]
+Homepage = "https://github.com/your-org/energy-flexibility"
+Repository = "https://github.com/your-org/energy-flexibility.git"
+Documentation = "https://energy-flexibility.readthedocs.io/"
 
 [tool.setuptools]
 packages = ["energy_flexibility", "energy_flexibility.core"]

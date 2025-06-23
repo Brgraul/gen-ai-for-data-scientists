@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Union
+from scipy.stats import norm
 
 from .data_loader import expand_da_time
 from .models import PriceData, VolatilityData, DeliveryDate
